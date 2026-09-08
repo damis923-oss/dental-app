@@ -1,374 +1,162 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Заказ-наряд лаборатории</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg-color: #f4f6f9;
-      --card-bg: #ffffff;
-      --text-color: #333333;
-      --border-color: #dcdfe6;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 12px;
-      box-sizing: border-box;
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 6px; }
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #4a5568; }
-    input, select, textarea {
-      width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 14px; margin-bottom: 12px;
-    }
-    
-    .date-grid { display: flex; gap: 10px; }
-    .date-grid > div { flex: 1; }
-
-    .arch-title { font-size: 12px; text-align: center; color: #718096; margin: 6px 0; font-weight: bold; }
-    .arch-wrapper { display: flex; align-items: center; justify-content: center; overflow-x: auto; padding: 4px 0; }
-    .dental-row { display: flex; align-items: center; }
-
-    .tooth-btn {
-      width: 36px; height: 38px; border: 2px solid #cbd5e0; background: #fff; border-radius: 8px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s; user-select: none; flex-shrink: 0;
-    }
-    .tooth-btn .type-tag { font-size: 7px; text-transform: uppercase; margin-top: 1px; overflow: hidden; max-width: 32px; text-overflow: ellipsis; white-space: nowrap; }
-
-    .connector {
-      width: 10px; height: 10px; border-radius: 50%; background-color: #ffffff;
-      border: 2px solid #cbd5e0; margin: 0 2px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
-    }
-    .connector.connected { background-color: #38a169; border-color: #2f855a; box-shadow: 0 0 5px rgba(56, 161, 105, 0.8); }
-
-    .type-crown_full { background-color: #805ad5 !important; color: white; border-color: #6b46c1; }
-    .type-pontic_full { background-color: #e53e3e !important; color: white; border-color: #c53030; }
-    .type-crown_layer { background-color: #dd6b20 !important; color: white; border-color: #c05621; }
-    .type-pontic_layer { background-color: #d69e2e !important; color: white; border-color: #b7791f; }
-    .type-veneer { background-color: #319795 !important; color: white; border-color: #2c7a7b; }
-    .type-veneer_layer { background-color: #3182ce !important; color: white; border-color: #2b6cb0; }
-    .type-splint { background-color: #4a5568 !important; color: white; border-color: #2d3748; }
-    .type-all_on_x { background-color: #edf2f7 !important; color: #1a202c; border-color: #cbd5e0; }
-    .type-waxup { background-color: #38a169 !important; color: white; border-color: #2f855a; }
-
-    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .photo-thumb { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid #cbd5e0; }
-
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 340px; }
-    .type-option { padding: 10px; margin: 4px 0; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; text-align: center; border: 1px solid #e2e8f0; }
-
-    .legend { display: flex; justify-content: center; gap: 12px; font-size: 11px; color: #718096; margin-top: 6px; }
-    .legend-item { display: flex; align-items: center; gap: 4px; }
-    .submit-btn { width: 100%; background-color: #38a169; color: white; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Наряд-заказ | Зуботехническая лаборатория</title>
+    <!-- Официальный скрипт Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #222);
+            margin: 0;
+            padding: 16px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--tg-theme-secondary-bg-color, #ffffff);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        textarea {
+            resize: vertical;
+            height: 70px;
+        }
+        button {
+            width: 100%;
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>👤 Пациент и Даты</h2>
-    <label>ФИО Пациента</label>
-    <input type="text" id="patient" placeholder="Иванов И.И.">
-    
-    <div class="date-grid">
-      <div>
-        <label>Дата приёма</label>
-        <input type="date" id="date" onchange="updateDueDate()">
-      </div>
-      <div>
-        <label>Дата сдачи (по умолчанию +7дн)</label>
-        <input type="date" id="dueDate">
-      </div>
+    <div class="container">
+        <h2>🦷 Создание наряд-заказа</h2>
+        
+        <div class="form-group">
+            <label for="patient">ФИО Пациента:</label>
+            <input type="text" id="patient" placeholder="Иванов И.И.">
+        </div>
+
+        <div class="form-group">
+            <label for="doctor">Лечащий врач:</label>
+            <input type="text" id="doctor" placeholder="Др. Смирнов">
+        </div>
+
+        <div class="form-group">
+            <label for="date">Дата приёма:</label>
+            <input type="date" id="date">
+        </div>
+
+        <div class="form-group">
+            <label for="dueDate">Дата сдачи:</label>
+            <input type="date" id="dueDate">
+        </div>
+
+        <div class="form-group">
+            <label for="material">Материал:</label>
+            <select id="material">
+                <option value="Цирконий">Цирконий</option>
+                <option value="E-Max">E-Max</option>
+                <option value="Металлокерамика">Металлокерамика</option>
+                <option value="Временная коронка">Временная коронка</option>
+                <option value="Съемный протез">Съемный протез</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="color">Цвет по шкале:</label>
+            <input type="text" id="color" placeholder="A2, BL3 и т.д.">
+        </div>
+
+        <div class="form-group">
+            <label for="price">Стоимость (руб.):</label>
+            <input type="number" id="price" placeholder="0">
+        </div>
+
+        <div class="form-group">
+            <label for="driveUrl">Ссылка на фото (Google Drive):</label>
+            <input type="url" id="driveUrl" placeholder="https://drive.google.com/...">
+        </div>
+
+        <div class="form-group">
+            <label for="comment">Комментарий / Пожелания:</label>
+            <textarea id="comment" placeholder="Особенности прикуса, пожелания по анатомии..."></textarea>
+        </div>
+
+        <button onclick="sendOrderData()">Отправить заказ в Telegram</button>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>🦷 Зубная формула и Мосты</h2>
-    <div class="arch-title">Верхняя челюсть</div>
-    <div class="arch-wrapper"><div class="dental-row" id="upper-arch"></div></div>
-    
-    <div class="arch-title">Нижняя челюсть</div>
-    <div class="arch-wrapper"><div class="dental-row" id="lower-arch"></div></div>
+    <script>
+        // Автоматически подставляем сегодняшнюю дату в поле даты приёма при открытии
+        document.getElementById('date').valueAsDate = new Date();
 
-    <div class="legend">
-      <div class="legend-item"><div class="connector"></div> Отдельно</div>
-      <div class="legend-item"><div class="connector connected"></div> Спаяно (Мост)</div>
-    </div>
-  </div>
+        function sendOrderData() {
+            const orderData = {
+                patient: document.getElementById('patient').value.trim(),
+                doctor: document.getElementById('doctor').value.trim(),
+                date: document.getElementById('date').value,
+                dueDate: document.getElementById('dueDate').value,
+                material: document.getElementById('material').value,
+                color: document.getElementById('color').value.trim(),
+                price: parseFloat(document.getElementById('price').value) || 0,
+                comment: document.getElementById('comment').value.trim(),
+                driveUrl: document.getElementById('driveUrl').value.trim()
+            };
 
-  <div class="card">
-    <h2>📸 Фотографии / Приложение</h2>
-    <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(this)">
-    <div class="photo-preview" id="photoPreview"></div>
-  </div>
+            // Проверка базового заполнения
+            if (!orderData.patient) {
+                alert("Пожалуйста, укажите ФИО пациента!");
+                return;
+            }
 
-  <div class="card">
-    <h2>🧪 Общие параметры</h2>
-    <label>Материал</label>
-    <select id="material">
-      <option value="Диоксид циркония">Диоксид циркония</option>
-      <option value="E-max">E-max</option>
-      <option value="PMMA (Временная)">PMMA (Временная)</option>
-      <option value="Металлокерамика">Металлокерамика</option>
-      <option value="КХС / ТИТАН">КХС / ТИТАН</option>
-    </select>
-
-    <label>Цвет (Шкала Vita / Bleach)</label>
-    <select id="color">
-      <option value="A1">A1</option><option value="A2">A2</option><option value="A3">A3</option><option value="A4">A4</option>
-      <option value="B1">B1</option><option value="B2">B2</option><option value="B3">B3</option><option value="B4">B4</option>
-      <option value="C1">C1</option><option value="C2">C2</option><option value="C3">C3</option><option value="C4">C4</option>
-      <option value="D1">D1</option><option value="D2">D2</option><option value="D3">D3</option><option value="D4">D4</option>
-      <option value="Bleach 1">Bleach 1</option><option value="Bleach 2">Bleach 2</option>
-      <option value="Bleach 3">Bleach 3</option><option value="Bleach 4">Bleach 4</option>
-    </select>
-
-    <label>Комментарий / Пожелания</label>
-    <textarea id="comment" rows="2" placeholder="Особенности прикуса, контакты и т.д."></textarea>
-  </div>
-
-  <button class="submit-btn" onclick="submitOrder()">Отправить заказ в лабораторию</button>
-
-  <div class="modal" id="typeModal">
-    <div class="modal-content">
-      <h3 id="modalTitle" style="margin-top:0; text-align:center;">Выберите конструкцию</h3>
-      <div id="typeOptions"></div>
-      <button onclick="closeModal()" style="width:100%; padding:8px; margin-top:10px; border-radius:6px; border:1px solid #ccc; background:#f7fafc;">Отмена</button>
-    </div>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVmcHqdQqabgz7suwZoHejsLl4PBUau0FKm5kIPPBr84On3huqwGOtSD0AOP5Sji2NZw/exec";
-
-    const upperTeeth = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
-    const lowerTeeth = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
-
-    const workTypes = [
-      { id: 'crown_full', title: 'Коронка полная анатомия', class: 'type-crown_full' },
-      { id: 'pontic_full', title: 'Подвесной зуб полная анатомия', class: 'type-pontic_full' },
-      { id: 'crown_layer', title: 'Коронка с нанесением', class: 'type-crown_layer' },
-      { id: 'pontic_layer', title: 'Подвесной зуб с нанесением', class: 'type-pontic_layer' },
-      { id: 'veneer', title: 'Винир', class: 'type-veneer' },
-      { id: 'veneer_layer', title: 'Винир с нанесением', class: 'type-veneer_layer' },
-      { id: 'splint', title: 'Сплинт', class: 'type-splint' },
-      { id: 'all_on_x', title: 'Конструкция Всё на 4 / Всё на 6', class: 'type-all_on_x' },
-      { id: 'waxup', title: 'Восковое моделирование (Wax-up)', class: 'type-waxup' },
-      { id: 'none', title: '❌ Снять выбор', class: '' }
-    ];
-
-    let selectedTeeth = {}; 
-    let connections = {};
-    let currentActiveTooth = null;
-    let uploadedPhotosBase64 = [];
-
-    function updateDueDate() {
-      const startDateVal = document.getElementById('date').value;
-      if (startDateVal) {
-        const startDate = new Date(startDateVal);
-        startDate.setDate(startDate.getDate() + 7);
-        document.getElementById('dueDate').valueAsDate = startDate;
-      }
-    }
-
-    function renderArch(teeth, containerId) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = '';
-      
-      teeth.forEach((tooth, idx) => {
-        const btn = document.createElement('div');
-        btn.className = 'tooth-btn';
-        btn.id = `tooth-${tooth}`;
-        btn.innerHTML = `<span>${tooth}</span><span class="type-tag" id="tag-${tooth}"></span>`;
-        btn.onclick = () => openModal(tooth);
-        container.appendChild(btn);
-
-        if (idx < teeth.length - 1) {
-          const nextTooth = teeth[idx + 1];
-          const connKey = `${tooth}-${nextTooth}`;
-          const conn = document.createElement('div');
-          conn.className = 'connector';
-          conn.id = `conn-${connKey}`;
-          conn.title = `Соединение ${tooth} и ${nextTooth}`;
-          conn.onclick = () => toggleConnection(connKey);
-          container.appendChild(conn);
+            if (window.Telegram && window.Telegram.WebApp) {
+                // Передаем данные боту и закрываем мини-приложение
+                window.Telegram.WebApp.sendData(JSON.stringify(orderData));
+                window.Telegram.WebApp.close();
+            } else {
+                alert("Ошибка: приложение запущено вне Telegram WebApp!");
+            }
         }
-      });
-    }
-
-    function toggleConnection(connKey) {
-      connections[connKey] = !connections[connKey];
-      const connElem = document.getElementById(`conn-${connKey}`);
-      if (connections[connKey]) {
-        connElem.classList.add('connected');
-      } else {
-        connElem.classList.remove('connected');
-      }
-    }
-
-    function openModal(tooth) {
-      currentActiveTooth = tooth;
-      document.getElementById('modalTitle').innerText = `Зуб №${tooth}`;
-      const optionsContainer = document.getElementById('typeOptions');
-      optionsContainer.innerHTML = '';
-
-      workTypes.forEach(opt => {
-        const item = document.createElement('div');
-        item.className = `type-option ${opt.class}`;
-        item.innerText = opt.title;
-        item.onclick = () => selectType(opt);
-        optionsContainer.appendChild(item);
-      });
-
-      document.getElementById('typeModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('typeModal').style.display = 'none';
-    }
-
-    function selectType(option) {
-      const btn = document.getElementById(`tooth-${currentActiveTooth}`);
-      const tag = document.getElementById(`tag-${currentActiveTooth}`);
-
-      workTypes.forEach(t => { if(t.class) btn.classList.remove(t.class); });
-
-      if (option.id === 'none') {
-        delete selectedTeeth[currentActiveTooth];
-        tag.innerText = '';
-      } else {
-        selectedTeeth[currentActiveTooth] = option;
-        btn.classList.add(option.class);
-        tag.innerText = option.title.split(' ')[0];
-      }
-      closeModal();
-    }
-
-    function handlePhotos(input) {
-      const preview = document.getElementById('photoPreview');
-      preview.innerHTML = '';
-      uploadedPhotosBase64 = [];
-
-      const files = Array.from(input.files);
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'photo-thumb';
-          preview.appendChild(img);
-
-          const base64Data = e.target.result.split(',')[1];
-          uploadedPhotosBase64.push({
-            data: base64Data,
-            mimeType: file.type || 'image/jpeg'
-          });
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function submitOrder() {
-      const submitBtn = document.querySelector('.submit-btn');
-      const patient = document.getElementById('patient').value.trim();
-      
-      if (!patient) { 
-        alert('⚠️ Пожалуйста, укажите ФИО пациента!'); 
-        return; 
-      }
-      
-      if (Object.keys(selectedTeeth).length === 0) { 
-        alert('⚠️ Выберите хотя бы один зуб и укажите тип конструкции!'); 
-        return; 
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.innerText = '⏳ Подготовка данных...';
-
-      let driveFolderUrl = 'Фото не прикреплены';
-
-      if (uploadedPhotosBase64.length > 0) {
-        submitBtn.innerText = '⏳ Загрузка фото на Google Диск...';
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 секунд лимит
-
-          const driveResponse = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              patient: patient,
-              photos: uploadedPhotosBase64
-            }),
-            signal: controller.signal
-          });
-          
-          clearTimeout(timeoutId);
-          const driveResult = await driveResponse.json();
-          if (driveResult.status === 'success') {
-            driveFolderUrl = driveResult.folderUrl;
-          }
-        } catch (e) {
-          console.warn('Google Диск пропущен или ответил с ошибкой:', e);
-          driveFolderUrl = 'Ошибка загрузки фото на диск (заказ отправлен без папки)';
-        }
-      }
-
-      submitBtn.innerText = '⏳ Отправка в Telegram...';
-
-      const activeConnections = Object.keys(connections).filter(k => connections[k]);
-
-      const payload = {
-        patient: patient,
-        date: document.getElementById('date').value || 'Не указана',
-        dueDate: document.getElementById('dueDate').value || 'Не указана',
-        teeth: selectedTeeth,
-        connections: activeConnections,
-        photosCount: uploadedPhotosBase64.length,
-        driveUrl: driveFolderUrl,
-        material: document.getElementById('material').value,
-        color: document.getElementById('color').value,
-        comment: document.getElementById('comment').value.trim()
-      };
-
-      try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendData) {
-          window.Telegram.WebApp.sendData(JSON.stringify(payload));
-          window.Telegram.WebApp.close();
-        } else {
-          alert("✅ Данные сформированы! (В обычном браузере Telegram.sendData недоступен, но в боте всё сработает).");
-          console.log("Payload:", payload);
-          submitBtn.disabled = false;
-          submitBtn.innerText = 'Отправить заказ в лабораторию';
-        }
-      } catch(e) {
-        alert("Ошибка отправки в Telegram: " + e.message);
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Отправить заказ в лабораторию';
-      }
-    }
-
-    const today = new Date();
-    document.getElementById('date').valueAsDate = today;
-    updateDueDate();
-
-    renderArch(upperTeeth, 'upper-arch');
-    renderArch(lowerTeeth, 'lower-arch');
-  </script>
+    </script>
 </body>
 </html>
