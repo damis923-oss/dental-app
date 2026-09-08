@@ -70,7 +70,7 @@
 <body>
 
     <div class="container">
-        <h2>🦷 Создание наряд-заказа</h2>
+        <h2>🦷 Новый наряд-заказ</h2>
         
         <div class="form-group">
             <label for="patient">ФИО Пациента:</label>
@@ -127,7 +127,7 @@
     </div>
 
     <script>
-        // Автоматически подставляем сегодняшнюю дату в поле даты приёма при открытии
+        // Подставляем сегодняшнюю дату по умолчанию
         document.getElementById('date').valueAsDate = new Date();
 
         function sendOrderData() {
@@ -143,14 +143,12 @@
                 driveUrl: document.getElementById('driveUrl').value.trim()
             };
 
-            // Проверка базового заполнения
             if (!orderData.patient) {
                 alert("Пожалуйста, укажите ФИО пациента!");
                 return;
             }
 
             if (window.Telegram && window.Telegram.WebApp) {
-                // Передаем данные боту и закрываем мини-приложение
                 window.Telegram.WebApp.sendData(JSON.stringify(orderData));
                 window.Telegram.WebApp.close();
             } else {
