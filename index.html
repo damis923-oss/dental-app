@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новый заказ-наряд</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 15px; background: #f5f5f7; color: #1c1c1e; }
+        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        h3 { margin-top: 0; font-size: 16px; color: #007aff; }
+        label { display: block; font-size: 13px; color: #8e8e93; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #c7c7cc; border-radius: 8px; box-sizing: border-box; margin-bottom: 10px; font-size: 15px; }
+        
+        /* Зубная формула */
+        .jaw { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 10px; }
+        .tooth { width: 36px; height: 36px; border: 1px solid #007aff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; cursor: pointer; background: #fff; color: #007aff; }
+        .tooth.selected { background: #007aff; color: #fff; }
+        
+        .btn-submit { width: 100%; background: #34c759; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h3>Данные пациента</h3>
+        <label>ФИО пациента</label>
+        <input type="text" id="patientName" placeholder="Иванов И. И.">
+        
+        <label>Дата приёма</label>
+        <input type="date" id="dueDate">
+    </div>
+
+    <div class="card">
+        <h3>Зубная формула (выберите зубы)</h3>
+        <label>Верхняя челюсть</label>
+        <div class="jaw" id="upperJaw"></div>
+        <label>Нижняя челюсть</label>
+        <div class="jaw" id="lowerJaw"></div>
+    </div>
+
+    <div class="card">
+        <h3>Детали работы</h3>
+        <label>Конструкция</label>
+        <select id="workType">
+            <option>Одиночная коронка</option>
+            <option>Мостовидный протез</option>
+            <option>Винир</option>
+            <option>Сплинт</option>
+            <option>All-on-4 / All-on-6</option>
+        </select>
+
+        <label>Материал</label>
+        <select id="material">
+            <option>Диоксид циркония</option>
+            <option>e.max</option>
+            <option>PMMA (Временная)</option>
+            <option>Металлокерамика</option>
+        </select>
+
+        <label>Цвет по шкале Vita</label>
+        <input type="text" id="color" placeholder="Например: A2, BL2">
+
+        <label>Комментарий / Опоры на имплантах</label>
+        <textarea id="comment" rows="3" placeholder="Укажите систему имплантов или особые пожелания..."></textarea>
+    </div>
+
+    <button class="btn-submit" onclick="sendData()">Отправить заказ в лабораторию</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const selectedTeeth = new Set();
+        const upper = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
+        const lower = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
+
+        function renderJaw(containerId, teethArr) {
+            const container = document.getElementById(containerId);
+            teethArr.forEach(num => {
+                const btn = document.createElement('div');
+                btn.className = 'tooth';
+                btn.innerText = num;
+                btn.onclick = () => {
+                    if (selectedTeeth.has(num)) {
+                        selectedTeeth.delete(num);
+                        btn.classList.remove('selected');
+                    } else {
+                        selectedTeeth.add(num);
+                        btn.classList.add('selected');
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        renderJaw('upperJaw', upper);
+        renderJaw('lowerJaw', lower);
+
+        function sendData() {
+            const data = {
+                patient: document.getElementById('patientName').value,
+                date: document.getElementById('dueDate').value,
+                teeth: Array.from(selectedTeeth).sort(),
+                workType: document.getElementById('workType').value,
+                material: document.getElementById('material').value,
+                color: document.getElementById('color').value,
+                comment: document.getElementById('comment').value
+            };
+
+            if (!data.patient || data.teeth.length === 0) {
+                alert('Заполните ФИО пациента и выберите хотя бы один зуб!');
+                return;
+            }
+
+            tg.sendData(JSON.stringify(data));
+        }
+    </script>
+</body>
+</html>
