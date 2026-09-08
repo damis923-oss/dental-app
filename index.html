@@ -276,8 +276,16 @@
 
     function submitOrder() {
       const patient = document.getElementById('patient').value.trim();
-      if (!patient) { alert('Укажите ФИО пациента!'); return; }
-      if (Object.keys(selectedTeeth).length === 0) { alert('Выберите хотя бы один зуб!'); return; }
+      
+      if (!patient) { 
+        alert('⚠️ Пожалуйста, укажите ФИО пациента!'); 
+        return; 
+      }
+      
+      if (Object.keys(selectedTeeth).length === 0) { 
+        alert('⚠️ Выберите хотя бы один зуб и укажите для него тип конструкции!'); 
+        return; 
+      }
 
       const activeConnections = Object.keys(connections).filter(k => connections[k]);
 
@@ -295,8 +303,9 @@
 
       try {
         tg.sendData(JSON.stringify(payload));
+        tg.close();
       } catch(e) {
-        alert("Ошибка отправки данных в Telegram. Запустите приложение из чата бота!");
+        alert("Ошибка отправки: " + e.message);
       }
     }
 
