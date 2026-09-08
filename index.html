@@ -11,10 +11,9 @@
       --card-bg: #ffffff;
       --text-color: #333333;
       --border-color: #dcdfe6;
-      --primary-color: #3182ce;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
       margin: 0;
@@ -28,23 +27,36 @@
       margin-bottom: 16px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
-    h2 { font-size: 16px; margin-top: 0; margin-bottom: 12px; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 6px; }
+    h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 6px; }
     label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #4a5568; }
     input, select, textarea {
       width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 14px; margin-bottom: 12px;
     }
     
-    /* Зубная формула */
-    .arch-title { font-size: 12px; text-align: center; color: #718096; margin: 4px 0; font-weight: bold; }
-    .dental-grid { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
-    .tooth-btn {
-      width: 38px; height: 38px; border: 2px solid #cbd5e0; background: #fff; border-radius: 8px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s; user-select: none;
-    }
-    .tooth-btn .type-tag { font-size: 7px; text-transform: uppercase; margin-top: 1px; overflow: hidden; max-width: 34px; text-overflow: ellipsis; white-space: nowrap; }
+    /* Сетка дат */
+    .date-grid { display: flex; gap: 10px; }
+    .date-grid > div { flex: 1; }
 
-    /* Цвета конструкций */
+    /* Зубная формула и коннекторы */
+    .arch-title { font-size: 12px; text-align: center; color: #718096; margin: 6px 0; font-weight: bold; }
+    .arch-wrapper { display: flex; align-items: center; justify-content: center; overflow-x: auto; padding: 4px 0; }
+    .dental-row { display: flex; align-items: center; }
+
+    .tooth-btn {
+      width: 36px; height: 38px; border: 2px solid #cbd5e0; background: #fff; border-radius: 8px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s; user-select: none; flex-shrink: 0;
+    }
+    .tooth-btn .type-tag { font-size: 7px; text-transform: uppercase; margin-top: 1px; overflow: hidden; max-width: 32px; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Лампочка-коннектор между зубами */
+    .connector {
+      width: 10px; height: 10px; border-radius: 50%; background-color: #ffffff;
+      border: 2px solid #cbd5e0; margin: 0 2px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+    }
+    .connector.connected { background-color: #38a169; border-color: #2f855a; box-shadow: 0 0 5px rgba(56, 161, 105, 0.8); }
+
+    /* Цвета типов Exocad */
     .type-crown_full { background-color: #805ad5 !important; color: white; border-color: #6b46c1; }
     .type-pontic_full { background-color: #e53e3e !important; color: white; border-color: #c53030; }
     .type-crown_layer { background-color: #dd6b20 !important; color: white; border-color: #c05621; }
@@ -52,33 +64,60 @@
     .type-veneer { background-color: #319795 !important; color: white; border-color: #2c7a7b; }
     .type-veneer_layer { background-color: #3182ce !important; color: white; border-color: #2b6cb0; }
     .type-splint { background-color: #4a5568 !important; color: white; border-color: #2d3748; }
-    .type-all_on_x { background-color: #e2e8f0 !important; color: #1a202c; border-color: #cbd5e0; }
+    .type-all_on_x { background-color: #edf2f7 !important; color: #1a202c; border-color: #cbd5e0; }
     .type-waxup { background-color: #38a169 !important; color: white; border-color: #2f855a; }
+
+    /* Предпросмотр фото */
+    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .photo-thumb { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid #cbd5e0; }
 
     /* Модальное окно */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 340px; }
     .type-option { padding: 10px; margin: 4px 0; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; text-align: center; border: 1px solid #e2e8f0; }
 
+    .legend { display: flex; justify-content: center; gap: 12px; font-size: 11px; color: #718096; margin-top: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
     .submit-btn { width: 100%; background-color: #38a169; color: white; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>👤 Информация о пациенте</h2>
+    <h2>👤 Пациент и Даты</h2>
     <label>ФИО Пациента</label>
     <input type="text" id="patient" placeholder="Иванов И.И.">
-    <label>Дата приёма</label>
-    <input type="date" id="date">
+    
+    <div class="date-grid">
+      <div>
+        <label>Дата приёма</label>
+        <input type="date" id="date">
+      </div>
+      <div>
+        <label>Дата сдачи работы</label>
+        <input type="date" id="dueDate">
+      </div>
+    </div>
   </div>
 
   <div class="card">
-    <h2>🦷 Индикация (Выбор зубов)</h2>
+    <h2>🦷 Зубная формула и Мосты</h2>
     <div class="arch-title">Верхняя челюсть</div>
-    <div class="dental-grid" id="upper-arch"></div>
+    <div class="arch-wrapper"><div class="dental-row" id="upper-arch"></div></div>
+    
     <div class="arch-title">Нижняя челюсть</div>
-    <div class="dental-grid" id="lower-arch"></div>
+    <div class="arch-wrapper"><div class="dental-row" id="lower-arch"></div></div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="connector"></div> Отдельно</div>
+      <div class="legend-item"><div class="connector connected"></div> Спаяно (Мост)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📸 Фотографии / Приложение</h2>
+    <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(this)">
+    <div class="photo-preview" id="photoPreview"></div>
   </div>
 
   <div class="card">
@@ -134,20 +173,46 @@
       { id: 'none', title: '❌ Снять выбор', class: '' }
     ];
 
-    let selectedTeeth = {}; // { 15: { typeId: 'crown_full', title: 'Коронка полная анатомия' } }
+    let selectedTeeth = {}; 
+    let connections = {}; // { '15-14': true }
     let currentActiveTooth = null;
+    let uploadedPhotoNames = [];
 
     function renderArch(teeth, containerId) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
-      teeth.forEach(tooth => {
+      
+      teeth.forEach((tooth, idx) => {
+        // Кнопка зуба
         const btn = document.createElement('div');
         btn.className = 'tooth-btn';
         btn.id = `tooth-${tooth}`;
         btn.innerHTML = `<span>${tooth}</span><span class="type-tag" id="tag-${tooth}"></span>`;
         btn.onclick = () => openModal(tooth);
         container.appendChild(btn);
+
+        // Лампочка-коннектор между соседними зубами
+        if (idx < teeth.length - 1) {
+          const nextTooth = teeth[idx + 1];
+          const connKey = `${tooth}-${nextTooth}`;
+          const conn = document.createElement('div');
+          conn.className = 'connector';
+          conn.id = `conn-${connKey}`;
+          conn.title = `Соединение ${tooth} и ${nextTooth}`;
+          conn.onclick = () => toggleConnection(connKey);
+          container.appendChild(conn);
+        }
       });
+    }
+
+    function toggleConnection(connKey) {
+      connections[connKey] = !connections[connKey];
+      const connElem = document.getElementById(`conn-${connKey}`);
+      if (connections[connKey]) {
+        connElem.classList.add('connected');
+      } else {
+        connElem.classList.remove('connected');
+      }
     }
 
     function openModal(tooth) {
@@ -175,7 +240,6 @@
       const btn = document.getElementById(`tooth-${currentActiveTooth}`);
       const tag = document.getElementById(`tag-${currentActiveTooth}`);
 
-      // Очистка предыдущих классов
       workTypes.forEach(t => { if(t.class) btn.classList.remove(t.class); });
 
       if (option.id === 'none') {
@@ -189,15 +253,39 @@
       closeModal();
     }
 
+    function handlePhotos(input) {
+      const preview = document.getElementById('photoPreview');
+      preview.innerHTML = '';
+      uploadedPhotoNames = [];
+
+      Array.from(input.files).forEach(file => {
+        uploadedPhotoNames.push(file.name);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.className = 'photo-thumb';
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     function submitOrder() {
       const patient = document.getElementById('patient').value.trim();
       if (!patient) { alert('Укажите ФИО пациента!'); return; }
       if (Object.keys(selectedTeeth).length === 0) { alert('Выберите хотя бы один зуб!'); return; }
 
+      // Формируем активные соединения
+      const activeConnections = Object.keys(connections).filter(k => connections[k]);
+
       const payload = {
         patient: patient,
         date: document.getElementById('date').value || 'Не указана',
+        dueDate: document.getElementById('dueDate').value || 'Не указана',
         teeth: selectedTeeth,
+        connections: activeConnections,
+        photosCount: uploadedPhotoNames.length,
         material: document.getElementById('material').value,
         color: document.getElementById('color').value,
         comment: document.getElementById('comment').value.trim()
@@ -206,7 +294,14 @@
       tg.sendData(JSON.stringify(payload));
     }
 
-    document.getElementById('date').valueAsDate = new Date();
+    // Инициализация дат
+    const today = new Date();
+    const defaultDueDate = new Date();
+    defaultDueDate.setDate(today.getDate() + 5);
+
+    document.getElementById('date').valueAsDate = today;
+    document.getElementById('dueDate').valueAsDate = defaultDueDate;
+
     renderArch(upperTeeth, 'upper-arch');
     renderArch(lowerTeeth, 'lower-arch');
   </script>
