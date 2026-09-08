@@ -298,31 +298,38 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.innerText = '⏳ Загрузка фото на Google Диск...';
+      submitBtn.innerText = '⏳ Подготовка данных...';
 
-      let driveFolderUrl = '';
+      let driveFolderUrl = 'Фото не прикреплены';
 
       if (uploadedPhotosBase64.length > 0) {
+        submitBtn.innerText = '⏳ Загрузка фото на Google Диск...';
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 секунд лимит
+
           const driveResponse = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
               patient: patient,
               photos: uploadedPhotosBase64
-            })
+            }),
+            signal: controller.signal
           });
           
+          clearTimeout(timeoutId);
           const driveResult = await driveResponse.json();
           if (driveResult.status === 'success') {
             driveFolderUrl = driveResult.folderUrl;
           }
         } catch (e) {
-          console.error('Ошибка загрузки на Google Диск:', e);
+          console.warn('Google Диск пропущен или ответил с ошибкой:', e);
+          driveFolderUrl = 'Ошибка загрузки фото на диск (заказ отправлен без папки)';
         }
       }
 
-      submitBtn.innerText = '⏳ Отправка наряда...';
+      submitBtn.innerText = '⏳ Отправка в Telegram...';
 
       const activeConnections = Object.keys(connections).filter(k => connections[k]);
 
@@ -333,15 +340,22 @@
         teeth: selectedTeeth,
         connections: activeConnections,
         photosCount: uploadedPhotosBase64.length,
-        driveUrl: driveFolderUrl || 'Фото не прикреплены',
+        driveUrl: driveFolderUrl,
         material: document.getElementById('material').value,
         color: document.getElementById('color').value,
         comment: document.getElementById('comment').value.trim()
       };
 
       try {
-        tg.sendData(JSON.stringify(payload));
-        tg.close();
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendData) {
+          window.Telegram.WebApp.sendData(JSON.stringify(payload));
+          window.Telegram.WebApp.close();
+        } else {
+          alert("✅ Данные сформированы! (В обычном браузере Telegram.sendData недоступен, но в боте всё сработает).");
+          console.log("Payload:", payload);
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Отправить заказ в лабораторию';
+        }
       } catch(e) {
         alert("Ошибка отправки в Telegram: " + e.message);
         submitBtn.disabled = false;
