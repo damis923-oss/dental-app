@@ -1,309 +1,169 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Заказ-наряд лаборатории</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg-color: #f4f6f9;
-      --card-bg: #ffffff;
-      --text-color: #333333;
-      --border-color: #dcdfe6;
+import json
+import time
+import os
+import requests
+
+BOT_TOKEN = "8619271593:AAGCMNE6Go3jJBVFwsGhqBkPAE8u_Y1n5dQ"
+WEB_APP_URL = "https://damis923-oss.github.io/dental-app/"
+BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
+
+# Ваш Telegram ID для получения дубликатов всех заказов
+ADMIN_CHAT_ID = 222209045
+
+DB_FILE = "orders_db.json"
+
+def get_hap_vpn_session():
+    hap_ports = [10808, 10809, 7890, 1080, 2080]
+    session = requests.Session()
+    session.trust_env = True
+    try:
+        r = session.get(f"{BASE_URL}/getMe", timeout=3)
+        if r.status_code == 200:
+            print("✅ Прямое подключение к Telegram успешно!")
+            return session
+    except Exception:
+        pass
+
+    for port in hap_ports:
+        session = requests.Session()
+        proxy_url = f"http://127.0.0.1:{port}"
+        session.proxies = {"http": proxy_url, "https": proxy_url}
+        try:
+            r = session.get(f"{BASE_URL}/getMe", timeout=3)
+            if r.status_code == 200:
+                print(f"✅ Успешно! Подключено через Hub VPN (порт {port})")
+                return session
+        except Exception:
+            continue
+
+    session = requests.Session()
+    session.trust_env = True
+    return session
+
+session = get_hap_vpn_session()
+
+def save_order_to_db(order_data, doctor_info):
+    orders = []
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                orders = json.load(f)
+        except Exception:
+            orders = []
+
+    order_id = len(orders) + 1
+    record = {
+        "order_id": order_id,
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "doctor": doctor_info,
+        "details": order_data
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 12px;
-      box-sizing: border-box;
+    orders.append(record)
+
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(orders, f, ensure_ascii=False, indent=2)
+
+    return order_id
+
+def send_message(chat_id, text, reply_markup=None):
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "Markdown"
     }
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    h2 { font-size: 15px; margin-top: 0; margin-bottom: 12px; color: #2d3748; border-bottom: 2px solid #edf2f7; padding-bottom: 6px; }
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #4a5568; }
-    input, select, textarea {
-      width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 14px; margin-bottom: 12px;
-    }
+    if reply_markup:
+        payload["reply_markup"] = json.dumps(reply_markup)
     
-    /* Сетка дат */
-    .date-grid { display: flex; gap: 10px; }
-    .date-grid > div { flex: 1; }
+    try:
+        session.post(f"{BASE_URL}/sendMessage", json=payload, timeout=10)
+    except Exception as e:
+        print(f"Ошибка отправки сообщения: {e}")
 
-    /* Зубная формула и коннекторы */
-    .arch-title { font-size: 12px; text-align: center; color: #718096; margin: 6px 0; font-weight: bold; }
-    .arch-wrapper { display: flex; align-items: center; justify-content: center; overflow-x: auto; padding: 4px 0; }
-    .dental-row { display: flex; align-items: center; }
+def process_update(update):
+    if "message" not in update:
+        return
 
-    .tooth-btn {
-      width: 36px; height: 38px; border: 2px solid #cbd5e0; background: #fff; border-radius: 8px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s; user-select: none; flex-shrink: 0;
-    }
-    .tooth-btn .type-tag { font-size: 7px; text-transform: uppercase; margin-top: 1px; overflow: hidden; max-width: 32px; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Лампочка-коннектор между зубами */
-    .connector {
-      width: 10px; height: 10px; border-radius: 50%; background-color: #ffffff;
-      border: 2px solid #cbd5e0; margin: 0 2px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
-    }
-    .connector.connected { background-color: #38a169; border-color: #2f855a; box-shadow: 0 0 5px rgba(56, 161, 105, 0.8); }
-
-    /* Цвета типов Exocad */
-    .type-crown_full { background-color: #805ad5 !important; color: white; border-color: #6b46c1; }
-    .type-pontic_full { background-color: #e53e3e !important; color: white; border-color: #c53030; }
-    .type-crown_layer { background-color: #dd6b20 !important; color: white; border-color: #c05621; }
-    .type-pontic_layer { background-color: #d69e2e !important; color: white; border-color: #b7791f; }
-    .type-veneer { background-color: #319795 !important; color: white; border-color: #2c7a7b; }
-    .type-veneer_layer { background-color: #3182ce !important; color: white; border-color: #2b6cb0; }
-    .type-splint { background-color: #4a5568 !important; color: white; border-color: #2d3748; }
-    .type-all_on_x { background-color: #edf2f7 !important; color: #1a202c; border-color: #cbd5e0; }
-    .type-waxup { background-color: #38a169 !important; color: white; border-color: #2f855a; }
-
-    /* Предпросмотр фото */
-    .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    .photo-thumb { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid #cbd5e0; }
-
-    /* Модальное окно */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 340px; }
-    .type-option { padding: 10px; margin: 4px 0; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; text-align: center; border: 1px solid #e2e8f0; }
-
-    .legend { display: flex; justify-content: center; gap: 12px; font-size: 11px; color: #718096; margin-top: 6px; }
-    .legend-item { display: flex; align-items: center; gap: 4px; }
-    .submit-btn { width: 100%; background-color: #38a169; color: white; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
-  </style>
-</head>
-<body>
-
-  <div class="card">
-    <h2>👤 Пациент и Даты</h2>
-    <label>ФИО Пациента</label>
-    <input type="text" id="patient" placeholder="Иванов И.И.">
+    msg = update["message"]
+    chat_id = msg["chat"]["id"]
+    from_user = msg.get("from", {})
+    doctor_name = f"{from_user.get('first_name', '')} {from_user.get('last_name', '')}".strip() or "Врач"
+    username = f"@{from_user.get('username')}" if from_user.get('username') else "без username"
     
-    <div class="date-grid">
-      <div>
-        <label>Дата приёма</label>
-        <input type="date" id="date">
-      </div>
-      <div>
-        <label>Дата сдачи работы</label>
-        <input type="date" id="dueDate">
-      </div>
-    </div>
-  </div>
+    text = msg.get("text", "")
 
-  <div class="card">
-    <h2>🦷 Зубная формула и Мосты</h2>
-    <div class="arch-title">Верхняя челюсть</div>
-    <div class="arch-wrapper"><div class="dental-row" id="upper-arch"></div></div>
-    
-    <div class="arch-title">Нижняя челюсть</div>
-    <div class="arch-wrapper"><div class="dental-row" id="lower-arch"></div></div>
-
-    <div class="legend">
-      <div class="legend-item"><div class="connector"></div> Отдельно</div>
-      <div class="legend-item"><div class="connector connected"></div> Спаяно (Мост)</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>📸 Фотографии / Приложение</h2>
-    <input type="file" id="photoInput" accept="image/*" multiple onchange="handlePhotos(this)">
-    <div class="photo-preview" id="photoPreview"></div>
-  </div>
-
-  <div class="card">
-    <h2>🧪 Общие параметры</h2>
-    <label>Материал</label>
-    <select id="material">
-      <option value="Диоксид циркония">Диоксид циркония</option>
-      <option value="E-max">E-max</option>
-      <option value="PMMA (Временная)">PMMA (Временная)</option>
-      <option value="Металлокерамика">Металлокерамика</option>
-      <option value="КХС / ТИТАН">КХС / ТИТАН</option>
-    </select>
-
-    <label>Цвет (Шкала Vita)</label>
-    <select id="color">
-      <option value="A1">A1</option><option value="A2">A2</option><option value="A3">A3</option><option value="A3.5">A3.5</option>
-      <option value="B1">B1</option><option value="B2">B2</option><option value="C1">C1</option><option value="D2">D2</option>
-      <option value="Bleach 1">Bleach 1</option><option value="Bleach 2">Bleach 2</option>
-    </select>
-
-    <label>Комментарий / Пожелания</label>
-    <textarea id="comment" rows="2" placeholder="Особенности прикуса, контакты и т.д."></textarea>
-  </div>
-
-  <button class="submit-btn" onclick="submitOrder()">Отправить заказ в лабораторию</button>
-
-  <!-- Модальное окно выбора типа -->
-  <div class="modal" id="typeModal">
-    <div class="modal-content">
-      <h3 id="modalTitle" style="margin-top:0; text-align:center;">Выберите конструкцию</h3>
-      <div id="typeOptions"></div>
-      <button onclick="closeModal()" style="width:100%; padding:8px; margin-top:10px; border-radius:6px; border:1px solid #ccc; background:#f7fafc;">Отмена</button>
-    </div>
-  </div>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    const upperTeeth = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
-    const lowerTeeth = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
-
-    const workTypes = [
-      { id: 'crown_full', title: 'Коронка полная анатомия', class: 'type-crown_full' },
-      { id: 'pontic_full', title: 'Подвесной зуб полная анатомия', class: 'type-pontic_full' },
-      { id: 'crown_layer', title: 'Коронка с нанесением', class: 'type-crown_layer' },
-      { id: 'pontic_layer', title: 'Подвесной зуб с нанесением', class: 'type-pontic_layer' },
-      { id: 'veneer', title: 'Винир', class: 'type-veneer' },
-      { id: 'veneer_layer', title: 'Винир с нанесением', class: 'type-veneer_layer' },
-      { id: 'splint', title: 'Сплинт', class: 'type-splint' },
-      { id: 'all_on_x', title: 'Конструкция Всё на 4 / Всё на 6', class: 'type-all_on_x' },
-      { id: 'waxup', title: 'Восковое моделирование (Wax-up)', class: 'type-waxup' },
-      { id: 'none', title: '❌ Снять выбор', class: '' }
-    ];
-
-    let selectedTeeth = {}; 
-    let connections = {}; // { '15-14': true }
-    let currentActiveTooth = null;
-    let uploadedPhotoNames = [];
-
-    function renderArch(teeth, containerId) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = '';
-      
-      teeth.forEach((tooth, idx) => {
-        // Кнопка зуба
-        const btn = document.createElement('div');
-        btn.className = 'tooth-btn';
-        btn.id = `tooth-${tooth}`;
-        btn.innerHTML = `<span>${tooth}</span><span class="type-tag" id="tag-${tooth}"></span>`;
-        btn.onclick = () => openModal(tooth);
-        container.appendChild(btn);
-
-        // Лампочка-коннектор между соседними зубами
-        if (idx < teeth.length - 1) {
-          const nextTooth = teeth[idx + 1];
-          const connKey = `${tooth}-${nextTooth}`;
-          const conn = document.createElement('div');
-          conn.className = 'connector';
-          conn.id = `conn-${connKey}`;
-          conn.title = `Соединение ${tooth} и ${nextTooth}`;
-          conn.onclick = () => toggleConnection(connKey);
-          container.appendChild(conn);
+    if text.startswith("/start"):
+        keyboard = {
+            "inline_keyboard": [[
+                {
+                    "text": "🦷 Создать заказ-наряд",
+                    "web_app": {"url": WEB_APP_URL}
+                }
+            ]]
         }
-      });
-    }
+        reply_text = (
+            f"Здравствуйте, {doctor_name}!\n\n"
+            "Добро пожаловать в систему приёма заказов зуботехнической лаборатории.\n"
+            "Нажмите кнопку ниже, чтобы оформить новый наряд-заказ:"
+        )
+        send_message(chat_id, reply_text, keyboard)
 
-    function toggleConnection(connKey) {
-      connections[connKey] = !connections[connKey];
-      const connElem = document.getElementById(`conn-${connKey}`);
-      if (connections[connKey]) {
-        connElem.classList.add('connected');
-      } else {
-        connElem.classList.remove('connected');
-      }
-    }
+    elif "web_app_data" in msg:
+        order = json.loads(msg["web_app_data"]["data"])
+        
+        doctor_info = f"{doctor_name} ({username}, ID: {chat_id})"
+        order_num = save_order_to_db(order, doctor_info)
 
-    function openModal(tooth) {
-      currentActiveTooth = tooth;
-      document.getElementById('modalTitle').innerText = `Зуб №${tooth}`;
-      const optionsContainer = document.getElementById('typeOptions');
-      optionsContainer.innerHTML = '';
+        # Ссылка на профиль врача
+        doctor_link = f"[{doctor_name}](tg://user?id={chat_id})"
 
-      workTypes.forEach(opt => {
-        const item = document.createElement('div');
-        item.className = `type-option ${opt.class}`;
-        item.innerText = opt.title;
-        item.onclick = () => selectType(opt);
-        optionsContainer.appendChild(item);
-      });
+        teeth_details = []
+        for tooth_num, data in sorted(order['teeth'].items(), key=lambda x: int(x[0])):
+            teeth_details.append(f"  • **Зуб {tooth_num}:** {data['title']}")
+        teeth_str = "\n".join(teeth_details)
 
-      document.getElementById('typeModal').style.display = 'flex';
-    }
+        connections = order.get('connections', [])
+        conn_formatted = f"🔗 **Спаянные единицы:** {', '.join([c.replace('-', '—') for c in connections])}" if connections else "🔗 **Тип сборки:** Все отдельно"
+        photos_cnt = order.get('photosCount', 0)
+        photos_str = f"📸 **Прикреплено фото:** {photos_cnt} шт." if photos_cnt > 0 else "📸 **Фото:** Нет"
 
-    function closeModal() {
-      document.getElementById('typeModal').style.display = 'none';
-    }
+        summary = (
+            f"📋 **НАРЯД-ЗАКАЗ №{order_num:04d}**\n"
+            f"👨‍⚕️ **Отправитель (Врач):** {doctor_link} ({username})\n\n"
+            f"👤 **Пациент:** {order['patient']}\n"
+            f"📅 **Дата приёма:** {order['date']}\n"
+            f"⏰ **Срок сдачи:** {order['dueDate']}\n\n"
+            f"🦷 **Конструкции:**\n{teeth_str}\n\n"
+            f"{conn_formatted}\n"
+            f"{photos_str}\n\n"
+            f"🧪 **Материал:** {order['material']}\n"
+            f"🎨 **Цвет:** {order['color']}\n"
+            f"💬 **Комментарий:** {order['comment'] or 'Нет'}"
+        )
+        
+        # 1. Подтверждение врачу
+        send_message(chat_id, f"✅ Ваш заказ принят!\n\n{summary}")
 
-    function selectType(option) {
-      const btn = document.getElementById(`tooth-${currentActiveTooth}`);
-      const tag = document.getElementById(`tag-${currentActiveTooth}`);
+        # 2. Уведомление вам (с прямым переходом в диалог с врачом)
+        if ADMIN_CHAT_ID and chat_id != ADMIN_CHAT_ID:
+            send_message(ADMIN_CHAT_ID, f"🔔 **ПОСТУПИЛ НОВЫЙ ЗАКАЗ!**\n\n{summary}")
 
-      workTypes.forEach(t => { if(t.class) btn.classList.remove(t.class); });
+def main():
+    print("Бот зуботехнической лаборатории запущен...")
+    offset = 0
+    while True:
+        try:
+            response = session.get(
+                f"{BASE_URL}/getUpdates",
+                params={"offset": offset, "timeout": 20},
+                timeout=25
+            )
+            if response.status_code == 200:
+                data = response.json()
+                for update in data.get("result", []):
+                    offset = update["update_id"] + 1
+                    process_update(update)
+        except Exception:
+            time.sleep(3)
 
-      if (option.id === 'none') {
-        delete selectedTeeth[currentActiveTooth];
-        tag.innerText = '';
-      } else {
-        selectedTeeth[currentActiveTooth] = option;
-        btn.classList.add(option.class);
-        tag.innerText = option.title.split(' ')[0];
-      }
-      closeModal();
-    }
-
-    function handlePhotos(input) {
-      const preview = document.getElementById('photoPreview');
-      preview.innerHTML = '';
-      uploadedPhotoNames = [];
-
-      Array.from(input.files).forEach(file => {
-        uploadedPhotoNames.push(file.name);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = document.createElement('img');
-          img.src = e.target.result;
-          img.className = 'photo-thumb';
-          preview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function submitOrder() {
-      const patient = document.getElementById('patient').value.trim();
-      if (!patient) { alert('Укажите ФИО пациента!'); return; }
-      if (Object.keys(selectedTeeth).length === 0) { alert('Выберите хотя бы один зуб!'); return; }
-
-      // Формируем активные соединения
-      const activeConnections = Object.keys(connections).filter(k => connections[k]);
-
-      const payload = {
-        patient: patient,
-        date: document.getElementById('date').value || 'Не указана',
-        dueDate: document.getElementById('dueDate').value || 'Не указана',
-        teeth: selectedTeeth,
-        connections: activeConnections,
-        photosCount: uploadedPhotoNames.length,
-        material: document.getElementById('material').value,
-        color: document.getElementById('color').value,
-        comment: document.getElementById('comment').value.trim()
-      };
-
-      tg.sendData(JSON.stringify(payload));
-    }
-
-    // Инициализация дат
-    const today = new Date();
-    const defaultDueDate = new Date();
-    defaultDueDate.setDate(today.getDate() + 5);
-
-    document.getElementById('date').valueAsDate = today;
-    document.getElementById('dueDate').valueAsDate = defaultDueDate;
-
-    renderArch(upperTeeth, 'upper-arch');
-    renderArch(lowerTeeth, 'lower-arch');
-  </script>
-</body>
-</html>
+if __name__ == "__main__":
+    main()
