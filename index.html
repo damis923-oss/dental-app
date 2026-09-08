@@ -4,157 +4,173 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Наряд-заказ | Зуботехническая лаборатория</title>
-    <!-- Официальный скрипт Telegram WebApp -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color, #f5f5f5);
-            color: var(--tg-theme-text-color, #222);
-            margin: 0;
-            padding: 16px;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: var(--tg-theme-secondary-bg-color, #ffffff);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 20px;
-        }
-        .form-group {
-            margin-bottom: 14px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 14px;
-            background: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
-        }
-        textarea {
-            resize: vertical;
-            height: 70px;
-        }
-        button {
-            width: 100%;
-            background-color: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: var(--tg-theme-bg-color, #f4f4f9); color: var(--tg-theme-text-color, #333); margin: 0; padding: 12px; }
+        .card { background: var(--tg-theme-secondary-bg-color, #fff); padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 500px; margin: 0 auto; }
+        h2 { text-align: center; margin-top: 0; font-size: 18px; }
+        .group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); }
+        
+        /* Зубная формула */
+        .formula-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 2px; margin-bottom: 8px; text-align: center; }
+        .tooth-btn { padding: 6px 0; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; font-size: 11px; cursor: pointer; user-select: none; }
+        .tooth-btn.active { background: #2481cc; color: #fff; border-color: #1a5c91; font-weight: bold; }
+        
+        .total-box { background: rgba(36, 129, 204, 0.1); padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 16px; margin: 15px 0; }
+        button.submit-btn { width: 100%; padding: 14px; background: var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-text-color, #fff); border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>🦷 Наряд-заказ лаборатории</h2>
-        
-        <div class="form-group">
-            <label for="patient">ФИО Пациента:</label>
-            <input type="text" id="patient" placeholder="Иванов И.И.">
-        </div>
+<div class="card">
+    <h2>🦷 Новый наряд-заказ</h2>
 
-        <div class="form-group">
-            <label for="doctor">Лечащий врач:</label>
-            <input type="text" id="doctor" placeholder="Др. Смирнов">
-        </div>
-
-        <div class="form-group">
-            <label for="date">Дата приёма:</label>
-            <input type="date" id="date">
-        </div>
-
-        <div class="form-group">
-            <label for="dueDate">Дата сдачи:</label>
-            <input type="date" id="dueDate">
-        </div>
-
-        <div class="form-group">
-            <label for="material">Материал:</label>
-            <select id="material">
-                <option value="Цирконий">Цирконий</option>
-                <option value="E-Max">E-Max</option>
-                <option value="Металлокерамика">Металлокерамика</option>
-                <option value="Временная коронка">Временная коронка</option>
-                <option value="Съемный протез">Съемный протез</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="color">Цвет по шкале:</label>
-            <input type="text" id="color" placeholder="A2, BL3 и т.д.">
-        </div>
-
-        <div class="form-group">
-            <label for="price">Стоимость (руб.):</label>
-            <input type="number" id="price" placeholder="0">
-        </div>
-
-        <div class="form-group">
-            <label for="driveUrl">Ссылка на фото/сканы (Google Drive):</label>
-            <input type="url" id="driveUrl" placeholder="https://drive.google.com/...">
-        </div>
-
-        <div class="form-group">
-            <label for="comment">Комментарий:</label>
-            <textarea id="comment" placeholder="Особенности работы, прикус..."></textarea>
-        </div>
-
-        <button onclick="sendOrderData()">Отправить наряд-заказ</button>
+    <div class="group">
+        <label>Врач:</label>
+        <input type="text" id="doctor" placeholder="Др. Смирнов">
     </div>
 
-    <script>
-        // Автоматически подставляем текущую дату
+    <div class="group">
+        <label>Пациент:</label>
+        <input type="text" id="patient" placeholder="Иванов И.И.">
+    </div>
+
+    <div class="group">
+        <label>Зубная формула (выберите зубы):</label>
+        <div class="formula-grid" id="upperTeeth"></div>
+        <div class="formula-grid" id="lowerTeeth"></div>
+    </div>
+
+    <div class="group">
+        <label>Тип изделия:</label>
+        <select id="productType" onchange="calculateTotal()">
+            <option value="Коронка">Коронка</option>
+            <option value="Культевая вкладка">Культевая вкладка</option>
+            <option value="Мостовидный протез">Мостовидный протез</option>
+            <option value="Съемный протез">Съемный протез</option>
+            <option value="Абатмент">Абатмент</option>
+        </select>
+    </div>
+
+    <div class="group">
+        <label>Материал:</label>
+        <select id="material" onchange="calculateTotal()">
+            <option value="Цирконий" data-price="3500">Цирконий (3500 ₽/ед)</option>
+            <option value="E-Max" data-price="4000">E-Max (4000 ₽/ед)</option>
+            <option value="Титан" data-price="3000">Титан (3000 ₽/ед)</option>
+            <option value="Металлокерамика" data-price="2500">Металлокерамика (2500 ₽/ед)</option>
+            <option value="Временная коронка" data-price="1000">Временная коронка (1000 ₽/ед)</option>
+        </select>
+    </div>
+
+    <div class="group">
+        <label>Цвет по шкале:</label>
+        <input type="text" id="color" placeholder="A2, BL3">
+    </div>
+
+    <div class="group">
+        <label>Дата приёма / Дата сдачи:</label>
+        <div style="display: flex; gap: 8px;">
+            <input type="date" id="date">
+            <input type="date" id="dueDate">
+        </div>
+    </div>
+
+    <div class="group">
+        <label>Ссылка на Google Drive (фото/сканы):</label>
+        <input type="url" id="driveUrl" placeholder="https://drive.google.com/...">
+    </div>
+
+    <div class="group">
+        <label>Комментарий:</label>
+        <textarea id="comment" placeholder="Особенности прикуса, пожелания..."></textarea>
+    </div>
+
+    <div class="total-box">
+        Итого: <span id="totalPrice">0</span> ₽ (<span id="unitsCount">0</span> ед.)
+    </div>
+
+    <button class="submit-btn" onclick="sendData()">Отправить заказ</button>
+</div>
+
+<script>
+    const upper = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
+    const lower = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
+    let selectedTeeth = new Set();
+
+    function initFormula() {
+        const uContainer = document.getElementById('upperTeeth');
+        const lContainer = document.getElementById('lowerTeeth');
+        
+        upper.forEach(t => createToothBtn(t, uContainer));
+        lower.forEach(t => createToothBtn(t, lContainer));
         document.getElementById('date').valueAsDate = new Date();
+    }
 
-        function sendOrderData() {
-            const orderData = {
-                patient: document.getElementById('patient').value.trim(),
-                doctor: document.getElementById('doctor').value.trim(),
-                date: document.getElementById('date').value,
-                dueDate: document.getElementById('dueDate').value,
-                material: document.getElementById('material').value,
-                color: document.getElementById('color').value.trim(),
-                price: parseFloat(document.getElementById('price').value) || 0,
-                comment: document.getElementById('comment').value.trim(),
-                driveUrl: document.getElementById('driveUrl').value.trim()
-            };
-
-            if (!orderData.patient) {
-                alert("Пожалуйста, укажите ФИО пациента!");
-                return;
-            }
-
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.sendData(JSON.stringify(orderData));
-                window.Telegram.WebApp.close();
+    function createToothBtn(tooth, container) {
+        const btn = document.createElement('div');
+        btn.className = 'tooth-btn';
+        btn.innerText = tooth;
+        btn.onclick = () => {
+            if (selectedTeeth.has(tooth)) {
+                selectedTeeth.delete(tooth);
+                btn.classList.remove('active');
             } else {
-                alert("Ошибка: приложение должно быть открыто внутри Telegram!");
+                selectedTeeth.add(tooth);
+                btn.classList.add('active');
             }
+            calculateTotal();
+        };
+        container.appendChild(btn);
+    }
+
+    function calculateTotal() {
+        const matSelect = document.getElementById('material');
+        const pricePerUnit = parseFloat(matSelect.options[matSelect.selectedIndex].getAttribute('data-price')) || 0;
+        const count = selectedTeeth.size;
+        const total = count * pricePerUnit;
+        
+        document.getElementById('unitsCount').innerText = count;
+        document.getElementById('totalPrice').innerText = total;
+    }
+
+    function sendData() {
+        const patient = document.getElementById('patient').value.trim();
+        const doctor = document.getElementById('doctor').value.trim();
+
+        if (!patient || !doctor) {
+            alert("Пожалуйста, заполните ФИО Врача и Пациента!");
+            return;
         }
-    </script>
+
+        const teethArray = Array.from(selectedTeeth).sort((a,b) => a-b);
+
+        const data = {
+            doctor: doctor,
+            patient: patient,
+            teeth: teethArray.join(', ') || 'Не указаны',
+            units: selectedTeeth.size,
+            productType: document.getElementById('productType').value,
+            material: document.getElementById('material').value,
+            color: document.getElementById('color').value.trim() || 'A2',
+            price: parseFloat(document.getElementById('totalPrice').innerText) || 0,
+            date: document.getElementById('date').value,
+            dueDate: document.getElementById('dueDate').value,
+            driveUrl: document.getElementById('driveUrl').value.trim(),
+            comment: document.getElementById('comment').value.trim()
+        };
+
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.sendData(JSON.stringify(data));
+            window.Telegram.WebApp.close();
+        } else {
+            alert("Откройте приложение внутри Telegram!");
+        }
+    }
+
+    initFormula();
+</script>
 </body>
 </html>
